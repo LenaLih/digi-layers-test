@@ -309,3 +309,7 @@ npm run build
 - защиту от race condition;
 - масштабирование до большого количества слоёв;
 - простоту дальнейшего расширения.
+
+## Demo
+
+[Открыть приложение](https://lenalih.github.io/digi-layers-test/)
