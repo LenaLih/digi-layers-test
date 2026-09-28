@@ -1,5 +1,11 @@
 import { Box } from '@mui/material';
+
+import { Timeline } from './features/ui/Timeline.tsx';
+import { AnalyticsPanel } from './widgets/analytics/ui/AnalyticsPanel.tsx';
 import { LayersPanel } from './widgets/layers-panel/ui/LayersPanel.tsx';
+import { ViewMap } from './widgets/map/ui/ViewMap.tsx';
+
+import './App.css';
 
 function App() {
     return (
@@ -8,17 +14,14 @@ function App() {
             sx={{
                 minHeight: '100vh',
                 backgroundColor: '#f7f8fa',
-                px: {
-                    xs: 2,
-                    sm: 3,
-                },
-                py: {
-                    xs: 3,
-                    sm: 4,
-                },
+                px: {xs: 2, sm: 3,},
+                py: {xs: 3, sm: 4,},
                 boxSizing: 'border-box',
             }}
         >
+            <Timeline />
+            <AnalyticsPanel />
+            <ViewMap />
             <LayersPanel />
         </Box>
     );

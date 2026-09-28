@@ -14,12 +14,15 @@
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/material": "^9.4.0",
+    "maplibre-gl": "^6.11.2",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "recharts": "^3.10.1",
     "vedro": "^1.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@types/geojson": "^7946.0.16",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",

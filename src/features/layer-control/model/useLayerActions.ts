@@ -1,5 +1,10 @@
 import { loadLayer } from '../../../entities/layer/api/mockApi.ts';
-import type { LayerId, LayerStatus } from '../../../entities/layer/model/layerTypes.ts';
+import type {
+    LayerGeoJson,
+    LayerId,
+    LayerStatus,
+    Time,
+} from '../../../entities/layer/model/layerTypes.ts';
 import {
     useLayerStoreDispatch,
     useLayerStore,
@@ -12,6 +17,7 @@ type LayerPatch = {
     opacity?: number;
     status?: LayerStatus;
     requestId?: string | null;
+    dataByTime?: Partial<Record<Time, LayerGeoJson>>;
 };
 
 export const useLayerActions = () => {
@@ -66,10 +72,34 @@ export const useLayerActions = () => {
         });
     };
 
-    const enableLayer = async (id: LayerId) => {
+    const enableLayer = async (
+        id: LayerId,
+        time: Time = store.get('selectedTime'),
+    ) => {
+        const currentLayer =
+            store.get('layersById')[id];
+
+        if (!currentLayer) {
+            return;
+        }
+
+        if (currentLayer.dataByTime[time]) {
+            controllers.get(id)?.abort();
+            controllers.delete(id);
+
+            updateLayer(id, {
+                enabled: true,
+                status: 'success',
+                requestId: null,
+            });
+
+            return;
+        }
+
         controllers.get(id)?.abort();
 
         const controller = new AbortController();
+
         controllers.set(id, controller);
 
         const requestId = crypto.randomUUID();
@@ -81,24 +111,36 @@ export const useLayerActions = () => {
         });
 
         try {
-            await loadLayer(controller.signal);
+            const data = await loadLayer(
+                id,
+                time,
+                controller.signal,
+            );
 
-            const currentLayer =
+            const latestLayer =
                 store.get('layersById')[id];
 
-            if (!currentLayer) {
+            if (!latestLayer) {
                 return;
             }
 
-            if (currentLayer.requestId !== requestId) {
+            if (latestLayer.requestId !== requestId) {
                 return;
             }
 
             updateLayer(id, {
                 status: 'success',
+                requestId: null,
+
+                dataByTime: {
+                    ...latestLayer.dataByTime,
+                    [time]: data,
+                },
             });
 
-            controllers.delete(id);
+            if (controllers.get(id) === controller) {
+                controllers.delete(id);
+            }
         } catch (error) {
             if (
                 error instanceof DOMException &&
@@ -107,27 +149,33 @@ export const useLayerActions = () => {
                 return;
             }
 
-            const currentLayer =
+            const latestLayer =
                 store.get('layersById')[id];
 
-            if (!currentLayer) {
+            if (!latestLayer) {
                 return;
             }
 
-            if (currentLayer.requestId !== requestId) {
+            if (latestLayer.requestId !== requestId) {
                 return;
             }
 
             updateLayer(id, {
                 status: 'error',
+                requestId: null,
             });
 
-            controllers.delete(id);
+            if (controllers.get(id) === controller) {
+                controllers.delete(id);
+            }
         }
     };
 
-    const toggleLayer = async (id: LayerId) => {
-        const layer = store.get('layersById')[id];
+    const toggleLayer = async (
+        id: LayerId,
+    ) => {
+        const layer =
+            store.get('layersById')[id];
 
         if (!layer) {
             return;
@@ -141,8 +189,11 @@ export const useLayerActions = () => {
         await enableLayer(id);
     };
 
-    const retryLayer = async (id: LayerId) => {
-        const layer = store.get('layersById')[id];
+    const retryLayer = async (
+        id: LayerId,
+    ) => {
+        const layer =
+            store.get('layersById')[id];
 
         if (!layer) {
             return;
@@ -151,9 +202,32 @@ export const useLayerActions = () => {
         await enableLayer(id);
     };
 
+    const changeTime = async (
+        time: Time,
+    ) => {
+        dispatch(() => ({
+            selectedTime: time,
+        }));
+
+        const layersById =
+            store.get('layersById');
+
+        const enabledLayerIds =
+            Object.values(layersById)
+                .filter((layer) => layer.enabled)
+                .map((layer) => layer.id);
+
+        await Promise.all(
+            enabledLayerIds.map((id) =>
+                enableLayer(id, time),
+            ),
+        );
+    };
+
     return {
         setOpacity,
         toggleLayer,
         retryLayer,
+        changeTime,
     };
 };
