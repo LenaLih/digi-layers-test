@@ -20,8 +20,8 @@ function App() {
             }}
         >
             <Timeline />
-            <AnalyticsPanel />
             <ViewMap />
+            <AnalyticsPanel />
             <LayersPanel />
         </Box>
     );

@@ -36,6 +36,13 @@
 - кэширование уже загруженных данных по времени;
 - защита от race condition при быстрых переключениях;
 - обработка отмены запросов через `AbortController`.
+- 3D-визуализация зданий на карте с использованием MapLibre GL;
+- переключение между 2D и 3D режимами;
+- управление наклоном и поворотом карты;
+- выделение зданий при клике с отображением их высоты;
+- поиск улиц, адресов и объектов через Photon (OpenStreetMap);
+- плавное перемещение карты к найденному месту с отображением маркера.
+
 
 ## Стек
 
@@ -67,11 +74,11 @@ src/
 │           └── LayerItem.tsx
 │
 ├── features/
-│   └── layer-control/
-│       ├── model/
-│       │   └── useLayerActions.ts
-│       └── ui/
-│           └── Timeline.tsx
+│   ├── layer-control/
+│   │   └── model/
+│   │       └── useLayerActions.ts
+│   └── ui/
+│       └── Timeline.tsx
 │
 ├── widgets/
 │   ├── analytics/
@@ -84,13 +91,20 @@ src/
 │   │       └── LayersPanel.tsx
 │   │
 │   └── map/
+│       ├── lib/
+│       │   ├── searchPlaces.ts
+│       │   └── setupBuildingLayers.ts
 │       ├── model/
 │       │   └── mapLayerConfig.ts
 │       └── ui/
+│           ├── MapControls.tsx
 │           ├── MapPopup.tsx
+│           ├── MapSearch.tsx
 │           └── ViewMap.tsx
 │
+├── App.css
 ├── App.tsx
+├── index.css
 └── main.tsx
 ```
 
