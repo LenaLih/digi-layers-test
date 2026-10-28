@@ -1,4 +1,3 @@
-
 import {
     Popup,
     type Map,
@@ -71,11 +70,17 @@ export const setupBuildingLayers = (map: Map) => {
         },
     });
 
-    const buildingPopup = new Popup({
-        closeButton: true,
-        closeOnClick: false,
-        offset: 15,
-    });
+    let buildingPopup: Popup | null = null;
+
+    const clearSelection = () => {
+        if (map.getLayer(SELECTED_LAYER)) {
+            map.setFilter(SELECTED_LAYER, [
+                '==',
+                ['id'],
+                -1,
+            ]);
+        }
+    };
 
     const handleClick = (event: MapLayerMouseEvent) => {
         const feature = event.features?.[0];
@@ -94,6 +99,11 @@ export const setupBuildingLayers = (map: Map) => {
         const height = Number.isFinite(parsedHeight)
             ? `${parsedHeight} м`
             : 'Нет данных';
+
+        if (buildingPopup) {
+            buildingPopup.remove();
+            buildingPopup = null;
+        }
 
         map.setFilter(SELECTED_LAYER, [
             '==',
@@ -120,7 +130,22 @@ export const setupBuildingLayers = (map: Map) => {
 
         content.append(title, idText, heightText);
 
-        buildingPopup
+        const popup = new Popup({
+            closeButton: true,
+            closeOnClick: false,
+            offset: 15,
+        });
+
+        buildingPopup = popup;
+
+        popup.on('close', () => {
+            if (buildingPopup === popup) {
+                buildingPopup = null;
+                clearSelection();
+            }
+        });
+
+        popup
             .setLngLat(event.lngLat)
             .setDOMContent(content)
             .addTo(map);
@@ -134,18 +159,6 @@ export const setupBuildingLayers = (map: Map) => {
         map.getCanvas().style.cursor = '';
     };
 
-    const handlePopupClose = () => {
-        if (map.getLayer(SELECTED_LAYER)) {
-            map.setFilter(SELECTED_LAYER, [
-                '==',
-                ['id'],
-                -1,
-            ]);
-        }
-    };
-
-    buildingPopup.on('close', handlePopupClose);
-
     map.on('click', BUILDINGS_LAYER, handleClick);
     map.on('click', SELECTED_LAYER, handleClick);
 
@@ -153,14 +166,15 @@ export const setupBuildingLayers = (map: Map) => {
     map.on('mouseleave', BUILDINGS_LAYER, handleMouseLeave);
 
     return () => {
-        buildingPopup.off('close', handlePopupClose);
-        buildingPopup.remove();
-
         map.off('click', BUILDINGS_LAYER, handleClick);
         map.off('click', SELECTED_LAYER, handleClick);
 
         map.off('mouseenter', BUILDINGS_LAYER, handleMouseEnter);
         map.off('mouseleave', BUILDINGS_LAYER, handleMouseLeave);
+
+        const popup = buildingPopup;
+        buildingPopup = null;
+        popup?.remove();
 
         map.getCanvas().style.cursor = '';
     };
